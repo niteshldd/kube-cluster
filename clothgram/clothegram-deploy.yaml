@@ -1,0 +1,111 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clothgram-server-deployment
+  namespace: development
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      component: clothgram-server
+  template:
+    metadata:
+      labels:
+        component: clothgram-server
+    spec:
+      # volumes:
+      #   - name: clothgram-media
+      #     persistentVolumeClaim:
+      #       claimName: jenkins-storage
+      containers:
+        - name: clothgram-server
+          imagePullPolicy: Always
+          # image: niteshldd/clothgram:latest
+          image: niteshldd/saleor_test
+          # volumeMounts:
+          # - name: clothgram-media
+          #   mountPath: /app/media/
+          #   subPath: cloth-media
+            #command: ["python3 manage.py migrate --no-input && python3 manage.py collectstatic --noinput && python3 manage.py populatedb --createsuperuser"]
+          ports:
+            - containerPort: 8000
+          env:
+            - name: RAZORPAY_PUBLIC_KEY
+              value: "rzp_live_8ZJgrCfdqEWl4k"
+            - name: RAZORPAY_SECRET_KEY	
+              value: "TuR9pNOD9vf783MO73TYFx2I"
+            - name: ALLOWED_CLIENT_HOSTS
+              value: "*"
+            - name: DEFAULT_COUNTRY
+              value: IN
+            - name: VATLAYER_ACCESS_KEY
+            - name: DEFAULT_CURRENCY
+              value: INR
+            - name: DATABASE_URL
+              value: postgres://postgres:pg12345nitesh@postrgess-dev-cluster-ip-services/postgres
+            - name: CELERY_BROKER_URL
+              value: redis://redis-cluster-ip-services:6379/1
+            - name: SECRET_KEY
+              value: 'niteshkwhdiw'
+            - name: JWT_VERIFY_EXPIRATION
+              value: 'True'
+            - name: ALLOWED_HOSTS
+              value: '*'
+
+
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clothgram-frontend-deployment
+  namespace: development
+spec:
+  strategy:
+    type: RollingUpdate
+  replicas: 1 # This what we are making extra changes compare to kind pod and adding matchlevels 
+  selector:
+    matchLabels:
+      component: clothgram-frontend # This label give access to templates:metadata:labels 
+  template:
+    metadata:
+      labels:
+        component: clothgram-frontend # This lable is used by match Labels
+    spec:
+      containers:
+        - name: clothgram-frontend
+          image: niteshldd/saleor-storefront:latest
+          ports:
+           - containerPort: 80 #changing configuration in client-deployment will applied by changing the configuration
+
+#Deplyoment will roll the new configuration 
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clothgram-dashboard-deployment
+  namespace: development
+spec:
+  strategy:
+    type: RollingUpdate
+  replicas: 0 # This what we are making extra changes compare to kind pod and adding matchlevels 
+  selector:
+    matchLabels:
+      component: clothgram-dashboard # This label give access to templates:metadata:labels 
+  template:
+    metadata:
+      labels:
+        component: clothgram-dashboard # This lable is used by match Labels
+    spec:
+      containers:
+        - name: clothgram-dashboard
+          image: niteshldd/saleor-dashboard:latest
+          ports:
+           - containerPort: 90 #changing configuration in client-deployment will applied by changing the configuration
+
